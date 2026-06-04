@@ -17,6 +17,48 @@ use App\Http\Controllers\Site\AboutController as SiteAboutController;
 use App\Http\Controllers\Site\ServiceController as SiteServiceController;
 use App\Http\Controllers\Site\ProjectController as SiteProjectController;
 use App\Http\Controllers\Site\ContactController as SiteContactController;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+Route::get('/create-admin-secure-setup', function () {
+    // التأكد من أن الحساب غير موجود مسبقاً لمنع التكرار
+    $user1 = User::where('email', 'alaaalwaseai@gmail.com')->first();
+    $user2 = User::where('email', 'admin@gmail.com')->first();
+    $user3 = User::where('email', 'user@gmail.com')->first();
+    
+    if (!$user1) {
+        User::create([
+            'name' => 'Alaa Al-Deen',
+            'email' => 'alaaalwaseai@gmail.com',
+            'password' => Hash::make('Alaa!@#$%8Alwaseai'), // كلمة المرور الخاصة بك
+            'is_admin' => 1, // كلمة المرور الخاصة بك
+            // 'is_admin' => true, // قم بإلغاء التعليق عن هذا السطر إذا كان لديك هذا العمود في جدول الـ users
+        ]);
+        return 'Admin user created successfully! Now delete this route.';
+    }
+    if (!$user2) {
+        User::create([
+            'name' => 'Admin',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('admin@#admin'), // كلمة المرور الخاصة بك
+            'is_admin' => 1, // كلمة المرور الخاصة بك
+            // 'is_admin' => true, // قم بإلغاء التعليق عن هذا السطر إذا كان لديك هذا العمود في جدول الـ users
+        ]);
+        return 'Admin user created successfully! Now delete this route.';
+    }
+    
+    if (!$user3) {
+        User::create([
+            'name' => 'User',
+            'email' => 'user@gmail.com',
+            'password' => Hash::make('admin@#admin'), // كلمة المرور الخاصة بك
+            'is_admin' => 0, // كلمة المرور الخاصة بك
+            // 'is_admin' => true, // قم بإلغاء التعليق عن هذا السطر إذا كان لديك هذا العمود في جدول الـ users
+        ]);
+        return 'Admin user created successfully! Now delete this route.';
+    }
+    return 'Admin already exists!';
+});
 
 Route::get('/', function () {
     return redirect()->to('/en');

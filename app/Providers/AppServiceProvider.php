@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // الحفاظ على ميزة تسريع تحميل صفحات الفرونت-إند مسبقاً
         Vite::prefetch(concurrency: 3);
+
+        // إجبار تشغيل الروابط الآمنة HTTPS لتفادي مشكلة الـ Mixed Content على Render
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
     }
 }

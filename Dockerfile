@@ -16,7 +16,7 @@ RUN apk add --no-cache \
     libxml2-dev \
     git \
     oniguruma-dev \
-    && docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath
+    && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer

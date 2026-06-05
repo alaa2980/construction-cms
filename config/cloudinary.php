@@ -13,25 +13,25 @@ return [
     |--------------------------------------------------------------------------
     | Cloudinary Configuration
     |--------------------------------------------------------------------------
-    |
-    | An HTTP or HTTPS URL to notify your application (a webhook) when the process of uploads, deletes, and any API
-    | that accepts notification_url has completed.
-    |
-    |
     */
     'notification_url' => env('CLOUDINARY_NOTIFICATION_URL'),
 
     /*
     |--------------------------------------------------------------------------
-    | Cloudinary Configuration
+    | Cloudinary Credentials Explicitly
     |--------------------------------------------------------------------------
-    |
-    | Here you may configure your Cloudinary settings. Cloudinary is a cloud hosted
-    | media management service for all file uploads, storage, delivery and transformation needs.
-    |
-    |
+    | حقن القيم بشكل صريح ليتمكن لارافل والمكتبة من قراءتها دائماً دون لبس
     */
-    'cloud_url' => env('CLOUDINARY_URL', 'cloudinary://'.env('CLOUDINARY_KEY').':'.env('CLOUDINARY_SECRET').'@'.env('CLOUDINARY_CLOUD_NAME')),
+    'cloud_name' => env('CLOUDINARY_CLOUD_NAME'),
+    'api_key'    => env('CLOUDINARY_API_KEY'),
+    'api_secret' => env('CLOUDINARY_API_SECRET'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cloud URL
+    |--------------------------------------------------------------------------
+    */
+    'cloud_url' => env('CLOUDINARY_URL'),
 
     /**
      * Upload Preset From Cloudinary Dashboard

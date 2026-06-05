@@ -49,21 +49,9 @@ class ProjectController extends Controller
         if (Project::where('slug', $validated['slug'])->exists()) {
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
-
-        if ($request->hasFile('cover_image')) {
-            // 1. فحص هل المتغيرات مقروءة داخل لارافل أم لا؟
-            dd([
-                'cloud_name' => config('cloudinary.cloud_name'),
-                'api_key'    => config('cloudinary.api_key'),
-                'api_secret' => config('cloudinary.api_secret') ? 'موجود ومتوفر' : 'فارغ/غير مقروء',
-            ]);
-        }
         
-        // رفع الصورة الأساسية بأمان
         if ($request->hasFile('cover_image')) {
             try {
-                // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
-                config(['cloudinary.guzzle_options.verify' => false]);
                 $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
                 
                 if ($upload && $upload->getSecurePath()) {
@@ -79,12 +67,9 @@ class ProjectController extends Controller
 
         $project = Project::create($validated);
 
-        // رفع صور المعرض بأمان
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
-                    // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
-                    config(['cloudinary.guzzle_options.verify' => false]);
                     $uploadGallery = cloudinary()->upload($image->getRealPath());
                     
                     if ($uploadGallery && $uploadGallery->getSecurePath()) {
@@ -145,7 +130,6 @@ class ProjectController extends Controller
 
         if ($request->hasFile('cover_image')) {
             try {
-                // حذف الصورة القديمة من Cloudinary مباشرة إن وجدت
                 if ($project->cover_image) {
                     $publicId = $this->getCloudinaryPublicId($project->cover_image);
                     if ($publicId) {
@@ -153,9 +137,6 @@ class ProjectController extends Controller
                     }
                 }
 
-                // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
-                config(['cloudinary.guzzle_options.verify' => false]);
-                // رفع الصورة الجديدة
                 $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
                 
                 if ($upload && $upload->getSecurePath()) {
@@ -176,8 +157,6 @@ class ProjectController extends Controller
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
-                    // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
-                    config(['cloudinary.guzzle_options.verify' => false]);
                     $uploadGallery = cloudinary()->upload($image->getRealPath());
                     
                     if ($uploadGallery && $uploadGallery->getSecurePath()) {
@@ -198,7 +177,6 @@ class ProjectController extends Controller
     public function destroy(Project $project)
     {
         try {
-            // 1. حذف الغلاف من Cloudinary
             if ($project->cover_image) {
                 $coverPublicId = $this->getCloudinaryPublicId($project->cover_image);
                 if ($coverPublicId) {
@@ -206,7 +184,6 @@ class ProjectController extends Controller
                 }
             }
 
-            // 2. حذف صور المعرض من Cloudinary
             foreach ($project->images as $image) {
                 if ($image->image_path) {
                     $galleryPublicId = $this->getCloudinaryPublicId($image->image_path);
@@ -219,18 +196,13 @@ class ProjectController extends Controller
             \Log::error('Cloudinary Delete Assets Error: ' . $e->getMessage());
         }
 
-        // 3. حذف السجل من قاعدة البيانات (سيقوم بحذف صور الـ Gallery إذا كان هناك Cascade Delete)
         $project->delete();
 
         return redirect()->route('admin.projects.index')->with('success', 'Project and all its assets deleted successfully.');
     }
 
-    /**
-     * دالة مساعدة لاستخراج الـ Public ID الخاص بالملف من رابط Cloudinary الآمن
-     */
     private function getCloudinaryPublicId($url)
     {
-        // استخراج اسم الملف مع المسار الفرعي بعد مجلد الـ upload/vXXXXXXXX/
         preg_match('/\/upload\/(?:v\d+\/)?([^\.]+)/', $url, $matches);
         return isset($matches[1]) ? $matches[1] : null;
     }

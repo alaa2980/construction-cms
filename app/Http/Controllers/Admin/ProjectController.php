@@ -53,7 +53,7 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-            $uploadedFileUrl = Cloudinary::upload($request->file('cover_image')->getRealPath())->getSecurePath();
+            $uploadedFileUrl = cloudinary()->upload($request->file('cover_image')->getRealPath())->getSecurePath();
             $validated['cover_image'] = $uploadedFileUrl;
         }
 
@@ -61,7 +61,7 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadedGalleryUrl = Cloudinary::upload($image->getRealPath())->getSecurePath();
+                $uploadedGalleryUrl = cloudinary()->upload($image->getRealPath())->getSecurePath();
                 
                 ProjectImage::create([
                     'project_id' => $project->id,
@@ -118,7 +118,7 @@ class ProjectController extends Controller
             $oldCoverPath = str_replace('/storage/', '', $project->cover_image);
             Storage::disk('public')->delete($oldCoverPath);
 
-            $uploadedFileUrl = Cloudinary::upload($request->file('cover_image')->getRealPath())->getSecurePath();
+            $uploadedFileUrl = cloudinary()->upload($request->file('cover_image')->getRealPath())->getSecurePath();
             $validated['cover_image'] = $uploadedFileUrl;
         }
         else {
@@ -129,7 +129,7 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadedGalleryUrl = Cloudinary::upload($image->getRealPath())->getSecurePath();
+                $uploadedGalleryUrl = cloudinary()->upload($image->getRealPath())->getSecurePath();
                 ProjectImage::create([
                     'project_id' => $project->id,
                     'image_path' => $uploadedGalleryUrl,

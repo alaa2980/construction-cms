@@ -9,8 +9,6 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ProjectImage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ProjectController extends Controller
 {
@@ -41,7 +39,7 @@ class ProjectController extends Controller
             'client_name' => 'nullable|string|max:255',
             'completion_date' => 'nullable|date',
             'is_featured' => 'required|boolean',
-            'cover_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120', // حد أقصى 5 ميجا للصورة
+            'cover_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120', 
             'gallery_images' => 'nullable|array',
             'gallery_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
@@ -52,33 +50,38 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        // رفع الصورة الأساسية مع حقن الرابط المباشر وحمايتها من الـ null
+        // رفع الصورة الأساسية بأمان
         if ($request->hasFile('cover_image')) {
-            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath(), [
-                'fallback_url' => env('CLOUDINARY_URL')
-            ]);
-            
-            if ($upload) {
-                $validated['cover_image'] = $upload->getSecurePath();
-            } else {
-                return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي. تأكد من إعدادات المتغيرات في Render.']);
+            try {
+                $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+                
+                if ($upload && $upload->getSecurePath()) {
+                    $validated['cover_image'] = $upload->getSecurePath();
+                } else {
+                    return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي وتأكد من إعدادات المتغيرات.']);
+                }
+            } catch (\Exception $e) {
+                \Log::error('Cloudinary Store Cover Error: ' . $e->getMessage());
+                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع: ' . $e->getMessage()]);
             }
         }
 
         $project = Project::create($validated);
 
-        // رفع صور المعرض مع حقن الرابط المباشر وحمايتها من الـ null
+        // رفع صور المعرض بأمان
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadGallery = cloudinary()->upload($image->getRealPath(), [
-                    'fallback_url' => env('CLOUDINARY_URL')
-                ]);
-                
-                if ($uploadGallery) {
-                    ProjectImage::create([
-                        'project_id' => $project->id,
-                        'image_path' => $uploadGallery->getSecurePath(),
-                    ]);
+                try {
+                    $uploadGallery = cloudinary()->upload($image->getRealPath());
+                    
+                    if ($uploadGallery && $uploadGallery->getSecurePath()) {
+                        ProjectImage::create([
+                            'project_id' => $project->id,
+                            'image_path' => $uploadGallery->getSecurePath(),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Store Gallery Error: ' . $e->getMessage());
                 }
             }
         }
@@ -128,21 +131,28 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-            $oldCoverPath = str_replace('/storage/', '', $project->cover_image);
-            Storage::disk('public')->delete($oldCoverPath);
+            try {
+                // حذف الصورة القديمة من Cloudinary مباشرة إن وجدت
+                if ($project->cover_image) {
+                    $publicId = $this->getCloudinaryPublicId($project->cover_image);
+                    if ($publicId) {
+                        cloudinary()->destroy($publicId);
+                    }
+                }
 
-            // تحديث الصورة الأساسية مع حقن الرابط المباشر
-            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath(), [
-                'fallback_url' => env('CLOUDINARY_URL')
-            ]);
-            
-            if ($upload) {
-                $validated['cover_image'] = $upload->getSecurePath();
-            } else {
+                // رفع الصورة الجديدة
+                $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+                
+                if ($upload && $upload->getSecurePath()) {
+                    $validated['cover_image'] = $upload->getSecurePath();
+                } else {
+                    $validated['cover_image'] = $project->cover_image;
+                }
+            } catch (\Exception $e) {
+                \Log::error('Cloudinary Update Cover Error: ' . $e->getMessage());
                 $validated['cover_image'] = $project->cover_image;
             }
-        }
-        else {
+        } else {
             $validated['cover_image'] = $project->cover_image;
         }
 
@@ -150,16 +160,17 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                // تحديث صور المعرض مع حقن الرابط المباشر
-                $uploadGallery = cloudinary()->upload($image->getRealPath(), [
-                    'fallback_url' => env('CLOUDINARY_URL')
-                ]);
-                
-                if ($uploadGallery) {
-                    ProjectImage::create([
-                        'project_id' => $project->id,
-                        'image_path' => $uploadGallery->getSecurePath(),
-                    ]);
+                try {
+                    $uploadGallery = cloudinary()->upload($image->getRealPath());
+                    
+                    if ($uploadGallery && $uploadGallery->getSecurePath()) {
+                        ProjectImage::create([
+                            'project_id' => $project->id,
+                            'image_path' => $uploadGallery->getSecurePath(),
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    \Log::error('Cloudinary Update Gallery Error: ' . $e->getMessage());
                 }
             }
         }
@@ -169,16 +180,41 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        $coverPath = str_replace('/storage/', '', $project->cover_image);
-        Storage::disk('public')->delete($coverPath);
+        try {
+            // 1. حذف الغلاف من Cloudinary
+            if ($project->cover_image) {
+                $coverPublicId = $this->getCloudinaryPublicId($project->cover_image);
+                if ($coverPublicId) {
+                    cloudinary()->destroy($coverPublicId);
+                }
+            }
 
-        foreach ($project->images as $image) {
-            $galleryPath = str_replace('/storage/', '', $image->image_path);
-            Storage::disk('public')->delete($galleryPath);
+            // 2. حذف صور المعرض من Cloudinary
+            foreach ($project->images as $image) {
+                if ($image->image_path) {
+                    $galleryPublicId = $this->getCloudinaryPublicId($image->image_path);
+                    if ($galleryPublicId) {
+                        cloudinary()->destroy($galleryPublicId);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Cloudinary Delete Assets Error: ' . $e->getMessage());
         }
 
+        // 3. حذف السجل من قاعدة البيانات (سيقوم بحذف صور الـ Gallery إذا كان هناك Cascade Delete)
         $project->delete();
 
         return redirect()->route('admin.projects.index')->with('success', 'Project and all its assets deleted successfully.');
+    }
+
+    /**
+     * دالة مساعدة لاستخراج الـ Public ID الخاص بالملف من رابط Cloudinary الآمن
+     */
+    private function getCloudinaryPublicId($url)
+    {
+        // استخراج اسم الملف مع المسار الفرعي بعد مجلد الـ upload/vXXXXXXXX/
+        preg_match('/\/upload\/(?:v\d+\/)?([^\.]+)/', $url, $matches);
+        return isset($matches[1]) ? $matches[1] : null;
     }
 }

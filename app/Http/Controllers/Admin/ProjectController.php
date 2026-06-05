@@ -52,22 +52,28 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        // الحماية المضافة لمنع خطأ الـ null في cover_image
+        // رفع الصورة الأساسية مع حقن الرابط المباشر وحمايتها من الـ null
         if ($request->hasFile('cover_image')) {
-            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath(), [
+                'fallback_url' => env('CLOUDINARY_URL')
+            ]);
+            
             if ($upload) {
                 $validated['cover_image'] = $upload->getSecurePath();
             } else {
-                return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي. تأكد من إعدادات المفاتيح في Render وتنظيف الكاش.']);
+                return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي. تأكد من إعدادات المتغيرات في Render.']);
             }
         }
 
         $project = Project::create($validated);
 
-        // الحماية المضافة لصور المعرض
+        // رفع صور المعرض مع حقن الرابط المباشر وحمايتها من الـ null
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadGallery = cloudinary()->upload($image->getRealPath());
+                $uploadGallery = cloudinary()->upload($image->getRealPath(), [
+                    'fallback_url' => env('CLOUDINARY_URL')
+                ]);
+                
                 if ($uploadGallery) {
                     ProjectImage::create([
                         'project_id' => $project->id,
@@ -125,8 +131,11 @@ class ProjectController extends Controller
             $oldCoverPath = str_replace('/storage/', '', $project->cover_image);
             Storage::disk('public')->delete($oldCoverPath);
 
-            // الحماية المضافة أثناء التحديث
-            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+            // تحديث الصورة الأساسية مع حقن الرابط المباشر
+            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath(), [
+                'fallback_url' => env('CLOUDINARY_URL')
+            ]);
+            
             if ($upload) {
                 $validated['cover_image'] = $upload->getSecurePath();
             } else {
@@ -141,7 +150,11 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadGallery = cloudinary()->upload($image->getRealPath());
+                // تحديث صور المعرض مع حقن الرابط المباشر
+                $uploadGallery = cloudinary()->upload($image->getRealPath(), [
+                    'fallback_url' => env('CLOUDINARY_URL')
+                ]);
+                
                 if ($uploadGallery) {
                     ProjectImage::create([
                         'project_id' => $project->id,

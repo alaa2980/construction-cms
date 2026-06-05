@@ -52,21 +52,28 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
+        // الحماية المضافة لمنع خطأ الـ null في cover_image
         if ($request->hasFile('cover_image')) {
-            $uploadedFileUrl = cloudinary()->upload($request->file('cover_image')->getRealPath())->getSecurePath();
-            $validated['cover_image'] = $uploadedFileUrl;
+            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+            if ($upload) {
+                $validated['cover_image'] = $upload->getSecurePath();
+            } else {
+                return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي. تأكد من إعدادات المفاتيح في Render وتنظيف الكاش.']);
+            }
         }
 
         $project = Project::create($validated);
 
+        // الحماية المضافة لصور المعرض
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadedGalleryUrl = cloudinary()->upload($image->getRealPath())->getSecurePath();
-                
-                ProjectImage::create([
-                    'project_id' => $project->id,
-                    'image_path' => $uploadedGalleryUrl,
-                ]);
+                $uploadGallery = cloudinary()->upload($image->getRealPath());
+                if ($uploadGallery) {
+                    ProjectImage::create([
+                        'project_id' => $project->id,
+                        'image_path' => $uploadGallery->getSecurePath(),
+                    ]);
+                }
             }
         }
 
@@ -118,8 +125,13 @@ class ProjectController extends Controller
             $oldCoverPath = str_replace('/storage/', '', $project->cover_image);
             Storage::disk('public')->delete($oldCoverPath);
 
-            $uploadedFileUrl = cloudinary()->upload($request->file('cover_image')->getRealPath())->getSecurePath();
-            $validated['cover_image'] = $uploadedFileUrl;
+            // الحماية المضافة أثناء التحديث
+            $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
+            if ($upload) {
+                $validated['cover_image'] = $upload->getSecurePath();
+            } else {
+                $validated['cover_image'] = $project->cover_image;
+            }
         }
         else {
             $validated['cover_image'] = $project->cover_image;
@@ -129,11 +141,13 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $uploadedGalleryUrl = cloudinary()->upload($image->getRealPath())->getSecurePath();
-                ProjectImage::create([
-                    'project_id' => $project->id,
-                    'image_path' => $uploadedGalleryUrl,
-                ]);
+                $uploadGallery = cloudinary()->upload($image->getRealPath());
+                if ($uploadGallery) {
+                    ProjectImage::create([
+                        'project_id' => $project->id,
+                        'image_path' => $uploadGallery->getSecurePath(),
+                    ]);
+                }
             }
         }
 

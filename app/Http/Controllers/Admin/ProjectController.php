@@ -50,33 +50,7 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        if ($request->hasFile('cover_image')) {
-            try {
-                $file = $request->file('cover_image');
-                
-                // إرسال طلب يدوي مباشر لسيرفر Cloudinary باستخدام المتغيرات المقروءة
-                $response = \Illuminate\Support\Facades\Http::attach(
-                    'file', 
-                    file_get_contents($file->getRealPath()), 
-                    $file->getClientOriginalName()
-                )->post('https://api.cloudinary.com/v1_1/' . config('cloudinary.cloud_name') . '/image/upload', [
-                    'api_key' => config('cloudinary.api_key'),
-                    // سنستخدم الرفع غير الموقع (Unsigned) مؤقتاً كفحص أو نمرر التوقيع إذا لزم
-                    // لكن لنرى أولاً هل السيرفر سيعترض على الشبكة أم الحساب
-                ]);
-
-                // طباعة الرد الخام القادم من Cloudinary لمعرفة السبب الحقيقي
-                dd([
-                    'Status_Code' => $response->status(), // هل هو 200 أم 400 أم 403؟
-                    'Body_Response' => $response->json() ?? $response->body()
-                ]);
-                
-            } catch (\Exception $e) {
-                // إذا انقطع الاتصال في الشبكة سيطبع هذا الخطأ
-                dd('Network/SSL Error: ' . $e->getMessage());
-            }
-        }
-        
+        // استخدام المكتبة الرسمية الذكية للرفع بالاعتماد على الـ Unsigned Preset الجديد
         if ($request->hasFile('cover_image')) {
             try {
                 $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
@@ -84,11 +58,11 @@ class ProjectController extends Controller
                 if ($upload && $upload->getSecurePath()) {
                     $validated['cover_image'] = $upload->getSecurePath();
                 } else {
-                    return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الرفع السحابي وتأكد من إعدادات المتغيرات.']);
+                    return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الحصول على رابط آمن من Cloudinary.']);
                 }
             } catch (\Exception $e) {
                 \Log::error('Cloudinary Store Cover Error: ' . $e->getMessage());
-                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع: ' . $e->getMessage()]);
+                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع السحابي: ' . $e->getMessage()]);
             }
         }
 

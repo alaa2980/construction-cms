@@ -53,6 +53,8 @@ class ProjectController extends Controller
         // رفع الصورة الأساسية بأمان
         if ($request->hasFile('cover_image')) {
             try {
+                // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
+                config(['cloudinary.guzzle_options.verify' => false]);
                 $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
                 
                 if ($upload && $upload->getSecurePath()) {
@@ -72,6 +74,8 @@ class ProjectController extends Controller
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
+                    // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
+                    config(['cloudinary.guzzle_options.verify' => false]);
                     $uploadGallery = cloudinary()->upload($image->getRealPath());
                     
                     if ($uploadGallery && $uploadGallery->getSecurePath()) {
@@ -140,6 +144,8 @@ class ProjectController extends Controller
                     }
                 }
 
+                // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
+                config(['cloudinary.guzzle_options.verify' => false]);
                 // رفع الصورة الجديدة
                 $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
                 
@@ -161,6 +167,8 @@ class ProjectController extends Controller
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
+                    // كود مؤقت للتأكد من اتصال الـ SSL محلياً فقط (احذفه قبل الرفع لـ Render)
+                    config(['cloudinary.guzzle_options.verify' => false]);
                     $uploadGallery = cloudinary()->upload($image->getRealPath());
                     
                     if ($uploadGallery && $uploadGallery->getSecurePath()) {

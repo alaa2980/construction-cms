@@ -50,6 +50,15 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
+        if ($request->hasFile('cover_image')) {
+            // 1. فحص هل المتغيرات مقروءة داخل لارافل أم لا؟
+            dd([
+                'cloud_name' => config('cloudinary.cloud_name'),
+                'api_key'    => config('cloudinary.api_key'),
+                'api_secret' => config('cloudinary.api_secret') ? 'موجود ومتوفر' : 'فارغ/غير مقروء',
+            ]);
+        }
+        
         // رفع الصورة الأساسية بأمان
         if ($request->hasFile('cover_image')) {
             try {

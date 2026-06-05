@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ProjectImage;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 
 class ProjectController extends Controller
 {
@@ -40,9 +40,9 @@ class ProjectController extends Controller
             'client_name' => 'nullable|string|max:255',
             'completion_date' => 'nullable|date',
             'is_featured' => 'required|boolean',
-            'cover_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120', // حد أقصى 5 ميجا للصورة
+            'cover_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:10240', // رفعنا الحد لـ 10 ميجا لصور Unsplash
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         $validated['slug'] = Str::slug($validated['title']);
@@ -52,26 +52,24 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-
-            $path = $request->file('cover_image')->store('projects/covers', 'public');
-            $validated['cover_image'] = '/storage/' . $path;
+            $uploadedFileUrl = Cloudinary::upload($request->file('cover_image')->getRealPath())->getSecurePath();
+            $validated['cover_image'] = $uploadedFileUrl;
         }
 
         $project = Project::create($validated);
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-
-                $galleryPath = $image->store('projects/gallery', 'public');
+                $uploadedGalleryUrl = Cloudinary::upload($image->getRealPath())->getSecurePath();
                 
                 ProjectImage::create([
                     'project_id' => $project->id,
-                    'image_path' => '/storage/' . $galleryPath,
+                    'image_path' => $uploadedGalleryUrl,
                 ]);
             }
         }
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project published successfully with its gallery.');
+        return redirect()->route('admin.projects.index')->with('success', 'Project published successfully with its cloud gallery.');
     }
 
     public function show(Project $project)
@@ -103,9 +101,9 @@ class ProjectController extends Controller
             'client_name' => 'nullable|string|max:255',
             'completion_date' => 'nullable|date',
             'is_featured' => 'required|boolean',
-            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'cover_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'gallery_images' => 'nullable|array',
-            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:5120',
+            'gallery_images.*' => 'image|mimes:jpeg,png,jpg,webp|max:10240',
         ]);
 
         if ($project->title !== $validated['title']) {
@@ -116,14 +114,9 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-
-            $oldCoverPath = str_replace('/storage/', '', $project->cover_image);
-            Storage::disk('public')->delete($oldCoverPath);
-
-            $path = $request->file('cover_image')->store('projects/covers', 'public');
-            $validated['cover_image'] = '/storage/' . $path;
-        }
-        else {
+            $uploadedFileUrl = Cloudinary::upload($request->file('cover_image')->getRealPath())->getSecurePath();
+            $validated['cover_image'] = $uploadedFileUrl;
+        } else {
             $validated['cover_image'] = $project->cover_image;
         }
 
@@ -131,10 +124,10 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                $galleryPath = $image->store('projects/gallery', 'public');
+                $uploadedGalleryUrl = Cloudinary::upload($image->getRealPath())->getSecurePath();
                 ProjectImage::create([
                     'project_id' => $project->id,
-                    'image_path' => '/storage/' . $galleryPath,
+                    'image_path' => $uploadedGalleryUrl,
                 ]);
             }
         }
@@ -144,14 +137,6 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        $coverPath = str_replace('/storage/', '', $project->cover_image);
-        Storage::disk('public')->delete($coverPath);
-
-        foreach ($project->images as $image) {
-            $galleryPath = str_replace('/storage/', '', $image->image_path);
-            Storage::disk('public')->delete($galleryPath);
-        }
-
         $project->delete();
 
         return redirect()->route('admin.projects.index')->with('success', 'Project and all its assets deleted successfully.');

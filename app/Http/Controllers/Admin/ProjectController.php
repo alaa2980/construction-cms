@@ -51,32 +51,39 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        // استخراج الرابط الأساسي لـ Supabase من الـ Endpoint تلقائياً
-        $endpoint = config('filesystems.disks.s3.endpoint') ?? env('AWS_ENDPOINT');
-        $supabaseUrl = str_replace('/storage/v1/s3', '', $endpoint);
-        $bucketName = config('filesystems.disks.s3.bucket') ?? env('AWS_BUCKET', 'projects');
-
-        // الرفع السحابي للملف الأساسي عبر S3 وبناء الرابط المباشر
+        // 🛑 كود الفحص الصارم لصورة الغلاف 🛑
         if ($request->hasFile('cover_image')) {
             try {
+                // محاولة الرفع الفعلية إلى s3
                 $path = $request->file('cover_image')->store('covers', 's3');
-                $validated['cover_image'] = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $path;
+                
+                // إذا وصل الكود هنا بدون مشاكل، سنطبع مسار الملف المرفوع فوراً لنرى النتيجة!
+                dd([
+                    '📊 النتيجة' => '🚀 مبروك! الرفع إلى Supabase نجح تماماً وبدون أخطاء',
+                    '📂 المسار الذي أعاده السيرفر (Path)' => $path,
+                    '🔗 الرابط المتوقع المباشر' => Storage::disk('s3')->url($path)
+                ]);
+
             } catch (\Exception $e) {
-                \Log::error('Supabase Store Cover Error: ' . $e->getMessage());
-                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع إلى Supabase: ' . $e->getMessage()]);
+                // إذا فشل الرفع لأي سبب أمني أو خلل في الإعدادات، سيقذف الخطأ هنا فوراً على الشاشة
+                dd([
+                    '📊 النتيجة' => '❌ للاسف فشل الرفع السحابي واكتشفنا الخطأ الحقيقي',
+                    '⚠️ رسالة الخطأ الصريحة (Error Message)' => $e->getMessage(),
+                    '🔍 مكان الخطأ في الملف' => $e->getFile() . ' Line: ' . $e->getLine()
+                ]);
             }
         }
 
+        // بقية الكود لن يصل إليه لارافل طالما أن هناك صورة غلاف مرفوعة بسبب الـ dd()
         $project = Project::create($validated);
 
-        // الرفع السحابي لصور المعرض
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
                     $galleryPath = $image->store('gallery', 's3');
                     ProjectImage::create([
                         'project_id' => $project->id,
-                        'image_path' => rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $galleryPath,
+                        'image_path' => rtrim(str_replace('/storage/v1/s3', '', config('filesystems.disks.s3.endpoint')), '/') . '/storage/v1/object/public/' . config('filesystems.disks.s3.bucket', 'projects') . '/' . $galleryPath,
                     ]);
                 } catch (\Exception $e) {
                     \Log::error('Supabase Store Gallery Error: ' . $e->getMessage());

@@ -51,39 +51,43 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        // 🛑 كود الفحص الصارم لصورة الغلاف 🛑
+        $endpoint = config('filesystems.disks.s3.endpoint') ?? env('AWS_ENDPOINT');
+        $supabaseUrl = str_replace('/storage/v1/s3', '', $endpoint);
+        $bucketName = config('filesystems.disks.s3.bucket') ?? env('AWS_BUCKET', 'projects');
+
+        // 🚀 الرفع الآمن لصورة الغلاف باستخدام اسم فريد ومحدد قاطعاً 🚀
         if ($request->hasFile('cover_image')) {
             try {
-                // محاولة الرفع الفعلية إلى s3
-                $path = $request->file('cover_image')->store('covers', 's3');
-                
-                // إذا وصل الكود هنا بدون مشاكل، سنطبع مسار الملف المرفوع فوراً لنرى النتيجة!
-                dd([
-                    '📊 النتيجة' => '🚀 مبروك! الرفع إلى Supabase نجح تماماً وبدون أخطاء',
-                    '📂 المسار الذي أعاده السيرفر (Path)' => $path,
-                    '🔗 الرابط المتوقع المباشر' => Storage::disk('s3')->url($path)
-                ]);
+                $image = $request->file('cover_image');
+                // توليد اسم فريد بالكامل للملف مع الامتداد الأصلي
+                $fileName = uniqid() . '-' . time() . '.' . $image->getClientOriginalExtension();
+                $fullPath = 'covers/' . $fileName;
 
+                // استخدام دالة الرفع المباشر للمحتوى لتفادي مشاكل الـ Temp Paths في سيرفر Render
+                Storage::disk('s3')->put($fullPath, file_get_contents($image->getRealPath()));
+                
+                // حفظ الرابط النهائي المباشر في قاعدة البيانات
+                $validated['cover_image'] = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $fullPath;
             } catch (\Exception $e) {
-                // إذا فشل الرفع لأي سبب أمني أو خلل في الإعدادات، سيقذف الخطأ هنا فوراً على الشاشة
-                dd([
-                    '📊 النتيجة' => '❌ للاسف فشل الرفع السحابي واكتشفنا الخطأ الحقيقي',
-                    '⚠️ رسالة الخطأ الصريحة (Error Message)' => $e->getMessage(),
-                    '🔍 مكان الخطأ في الملف' => $e->getFile() . ' Line: ' . $e->getLine()
-                ]);
+                \Log::error('Supabase Store Cover Error: ' . $e->getMessage());
+                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع السحابي: ' . $e->getMessage()]);
             }
         }
 
-        // بقية الكود لن يصل إليه لارافل طالما أن هناك صورة غلاف مرفوعة بسبب الـ dd()
         $project = Project::create($validated);
 
+        // 🚀 الرفع الآمن لصور المعرض 🚀
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
-                    $galleryPath = $image->store('gallery', 's3');
+                    $galleryFileName = uniqid() . '-' . time() . '.' . $image->getClientOriginalExtension();
+                    $galleryFullPath = 'gallery/' . $galleryFileName;
+
+                    Storage::disk('s3')->put($galleryFullPath, file_get_contents($image->getRealPath()));
+
                     ProjectImage::create([
                         'project_id' => $project->id,
-                        'image_path' => rtrim(str_replace('/storage/v1/s3', '', config('filesystems.disks.s3.endpoint')), '/') . '/storage/v1/object/public/' . config('filesystems.disks.s3.bucket', 'projects') . '/' . $galleryPath,
+                        'image_path' => rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $galleryFullPath,
                     ]);
                 } catch (\Exception $e) {
                     \Log::error('Supabase Store Gallery Error: ' . $e->getMessage());

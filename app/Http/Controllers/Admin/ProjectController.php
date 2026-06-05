@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\ProjectImage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -50,42 +51,26 @@ class ProjectController extends Controller
             $validated['slug'] = $validated['slug'] . '-' . uniqid();
         }
 
-        // استخدام المكتبة الرسمية الذكية للرفع بالاعتماد على الـ Unsigned Preset الجديد
+        // الرفع السحابي للملف الأساسي عبر محرك s3 المدعوم رسمياً
         if ($request->hasFile('cover_image')) {
-            try {
-                $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
-                
-                if ($upload && $upload->getSecurePath()) {
-                    $validated['cover_image'] = $upload->getSecurePath();
-                } else {
-                    return redirect()->back()->withErrors(['cover_image' => 'عذراً، فشل الحصول على رابط آمن من Cloudinary.']);
-                }
-            } catch (\Exception $e) {
-                \Log::error('Cloudinary Store Cover Error: ' . $e->getMessage());
-                return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع السحابي: ' . $e->getMessage()]);
-            }
+            $path = $request->file('cover_image')->store('covers', 's3');
+            $validated['cover_image'] = Storage::disk('s3')->url($path);
         }
 
         $project = Project::create($validated);
 
+        // الرفع السحابي لصور المعرض
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                try {
-                    $uploadGallery = cloudinary()->upload($image->getRealPath());
-                    
-                    if ($uploadGallery && $uploadGallery->getSecurePath()) {
-                        ProjectImage::create([
-                            'project_id' => $project->id,
-                            'image_path' => $uploadGallery->getSecurePath(),
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Cloudinary Store Gallery Error: ' . $e->getMessage());
-                }
+                $galleryPath = $image->store('gallery', 's3');
+                ProjectImage::create([
+                    'project_id' => $project->id,
+                    'image_path' => Storage::disk('s3')->url($galleryPath),
+                ]);
             }
         }
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project published successfully with its gallery.');
+        return redirect()->route('admin.projects.index')->with('success', 'Project published successfully.');
     }
 
     public function show(Project $project)
@@ -130,25 +115,14 @@ class ProjectController extends Controller
         }
 
         if ($request->hasFile('cover_image')) {
-            try {
-                if ($project->cover_image) {
-                    $publicId = $this->getCloudinaryPublicId($project->cover_image);
-                    if ($publicId) {
-                        cloudinary()->destroy($publicId);
-                    }
-                }
-
-                $upload = cloudinary()->upload($request->file('cover_image')->getRealPath());
-                
-                if ($upload && $upload->getSecurePath()) {
-                    $validated['cover_image'] = $upload->getSecurePath();
-                } else {
-                    $validated['cover_image'] = $project->cover_image;
-                }
-            } catch (\Exception $e) {
-                \Log::error('Cloudinary Update Cover Error: ' . $e->getMessage());
-                $validated['cover_image'] = $project->cover_image;
+            // حذف الصورة القديمة من السحاب لتوفير المساحة
+            if ($project->cover_image) {
+                $oldPath = str_replace(Storage::disk('s3')->url(''), '', $project->cover_image);
+                Storage::disk('s3')->delete($oldPath);
             }
+
+            $path = $request->file('cover_image')->store('covers', 's3');
+            $validated['cover_image'] = Storage::disk('s3')->url($path);
         } else {
             $validated['cover_image'] = $project->cover_image;
         }
@@ -157,18 +131,11 @@ class ProjectController extends Controller
 
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
-                try {
-                    $uploadGallery = cloudinary()->upload($image->getRealPath());
-                    
-                    if ($uploadGallery && $uploadGallery->getSecurePath()) {
-                        ProjectImage::create([
-                            'project_id' => $project->id,
-                            'image_path' => $uploadGallery->getSecurePath(),
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    \Log::error('Cloudinary Update Gallery Error: ' . $e->getMessage());
-                }
+                $galleryPath = $image->store('gallery', 's3');
+                ProjectImage::create([
+                    'project_id' => $project->id,
+                    'image_path' => Storage::disk('s3')->url($galleryPath),
+                ]);
             }
         }
 
@@ -177,34 +144,22 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
-        try {
-            if ($project->cover_image) {
-                $coverPublicId = $this->getCloudinaryPublicId($project->cover_image);
-                if ($coverPublicId) {
-                    cloudinary()->destroy($coverPublicId);
-                }
-            }
+        // حذف الغلاف السحابي
+        if ($project->cover_image) {
+            $coverPath = str_replace(Storage::disk('s3')->url(''), '', $project->cover_image);
+            Storage::disk('s3')->delete($coverPath);
+        }
 
-            foreach ($project->images as $image) {
-                if ($image->image_path) {
-                    $galleryPublicId = $this->getCloudinaryPublicId($image->image_path);
-                    if ($galleryPublicId) {
-                        cloudinary()->destroy($galleryPublicId);
-                    }
-                }
+        // حذف صور المعرض السحابية
+        foreach ($project->images as $image) {
+            if ($image->image_path) {
+                $galleryPath = str_replace(Storage::disk('s3')->url(''), '', $image->image_path);
+                Storage::disk('s3')->delete($galleryPath);
             }
-        } catch (\Exception $e) {
-            \Log::error('Cloudinary Delete Assets Error: ' . $e->getMessage());
         }
 
         $project->delete();
 
-        return redirect()->route('admin.projects.index')->with('success', 'Project and all its assets deleted successfully.');
-    }
-
-    private function getCloudinaryPublicId($url)
-    {
-        preg_match('/\/upload\/(?:v\d+\/)?([^\.]+)/', $url, $matches);
-        return isset($matches[1]) ? $matches[1] : null;
+        return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
     }
 }

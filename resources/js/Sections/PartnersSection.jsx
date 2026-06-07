@@ -61,12 +61,27 @@ export default function PartnersSection() {
 
             {/* حقن ستايل الـ CSS الخاص بالأنيميشن اللامتناهي ليعمل في السايدبار تلقائياً وبأمان مطلق */}
             <style jsx global>{`
-                @keyframes infiniteScroll {
+                /* الحركة الافتراضية للغة الإنجليزية (LTR) */
+                @keyframes infiniteScrollLTR {
                     0% { transform: translateX(0); }
                     100% { transform: translateX(-33.3333%); }
                 }
+
+                /* الحركة المعكوسة للغة العربية (RTL) */
+                @keyframes infiniteScrollRTL {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(33.3333%); }
+                }
+
+                /* تطبيق الحركة الافتراضية LTR */
                 .animate-infinite-scroll {
-                    animation: infiniteScroll 35s linear infinite;
+                    animation: infiniteScrollLTR 35s linear infinite;
+                }
+
+                /* 🌐 السحر هنا: تبديل الحركة أوتوماتيكياً عندما يكون الموقع عربي RTL */
+                [dir="rtl"] .animate-infinite-scroll,
+                :global([dir="rtl"]) .animate-infinite-scroll {
+                    animation: infiniteScrollRTL 35s linear infinite;
                 }
             `}</style>
         </section>

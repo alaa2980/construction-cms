@@ -137,10 +137,10 @@ export default function Portfolio({ projects = [], categories = [], isHome = fal
                 </motion.div>
 
                 {/* View All Button - Displays natively based on database population */}
-                {isHome && projects && projects.length > 0 && (
+                {isHome && projects && projects.length > 4 && (
                     <div className="text-center mt-20">
                         <Link 
-                            href="/portfolio"
+                            href={route('site.portfolio.index')}
                             className="inline-flex items-center justify-center px-8 py-3.5 border border-charcoal-dark/20 text-charcoal-dark text-sm font-bold hover:bg-charcoal-dark hover:text-white hover:border-transparent transition-all duration-300 rounded-md shadow-sm"
                         >
                             {__('portfolio.viewAll')}

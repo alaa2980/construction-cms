@@ -137,7 +137,7 @@ export default function Portfolio({ projects = [], categories = [], isHome = fal
                 </motion.div>
 
                 {/* View All Button - Displays natively based on database population */}
-                {isHome && projects && projects.length > 4 && (
+                {isHome && projects && projects.length > 0 && (
                     <div className="text-center mt-20">
                         <Link 
                             href={route('site.portfolio.index')}

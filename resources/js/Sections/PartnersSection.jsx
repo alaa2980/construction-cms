@@ -36,7 +36,8 @@ export default function PartnersSection() {
                 <div className="absolute right-0 top-0 bottom-0 w-24 md:w-40 bg-gradient-to-l from-charcoal-dark to-transparent z-10 pointer-events-none" />
 
                 {/* 🌐 تم استبدال space-x بـ gap لإنهاء مشكلة التداخل في العربي نهائياً وتأمين تباعد العناصر الفاخر */}
-                <div className="flex gap-16 md:gap-24 whitespace-nowrap animate-infinite-scroll group-hover/track:[animation-play-state:paused] py-4 pr-16 md:pr-24">
+                {/* استخدمنا pe (padding-end) بدلاً من pr لكي يتأقلم مع اللغتين، يمين في الانجليزي ويسار في العربي */}
+                <div className="flex gap-16 md:gap-24 whitespace-nowrap animate-infinite-scroll group-hover/track:[animation-play-state:paused] py-4 pe-16 md:pe-24">
                     {infinitePartners.map((partner, index) => {
                         const IconComponent = partner.icon;
                         
@@ -59,29 +60,26 @@ export default function PartnersSection() {
 
             </div>
 
-            {/* حقن ستايل الـ CSS الخاص بالأنيميشن اللامتناهي ليعمل في السايدبار تلقائياً وبأمان مطلق */}
+            {/* حقن ستايل الـ CSS باستخدام متغيرات ذكية تتأقلم مع اتجاه الموقع (LTR / RTL) */}
             <style jsx global>{`
-                /* الحركة الافتراضية للغة الإنجليزية (LTR) */
-                @keyframes infiniteScrollLTR {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(-33.3333%); }
+                /* 1. تحديد نقطة النهاية الافتراضية (لليسار في الإنجليزي) */
+                :root {
+                    --marquee-destination: -33.3333%;
                 }
 
-                /* الحركة المعكوسة للغة العربية (RTL) */
-                @keyframes infiniteScrollRTL {
-                    0% { transform: translateX(0); }
-                    100% { transform: translateX(33.3333%); }
+                /* 2. عكس نقطة النهاية تلقائياً (لليمين في العربي) */
+                [dir="rtl"] {
+                    --marquee-destination: 33.3333%;
                 }
 
-                /* تطبيق الحركة الافتراضية LTR */
+                /* 3. حركة واحدة ذكية تقرأ المتغير حسب لغة الموقع */
+                @keyframes infiniteScroll {
+                    0% { transform: translateX(0); }
+                    100% { transform: translateX(var(--marquee-destination)); }
+                }
+
                 .animate-infinite-scroll {
-                    animation: infiniteScrollLTR 35s linear infinite;
-                }
-
-                /* 🌐 السحر هنا: تبديل الحركة أوتوماتيكياً عندما يكون الموقع عربي RTL */
-                [dir="rtl"] .animate-infinite-scroll,
-                :global([dir="rtl"]) .animate-infinite-scroll {
-                    animation: infiniteScrollRTL 35s linear infinite;
+                    animation: infiniteScroll 35s linear infinite;
                 }
             `}</style>
         </section>

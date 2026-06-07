@@ -55,19 +55,11 @@ class ProjectController extends Controller
         $supabaseUrl = str_replace('/storage/v1/s3', '', $endpoint);
         $bucketName = config('filesystems.disks.s3.bucket') ?? env('AWS_BUCKET', 'projects');
 
-        // 🚀 الرفع الآمن لصورة الغلاف باستخدام اسم فريد ومحدد قاطعاً 🚀
         if ($request->hasFile('cover_image')) {
             try {
-                $image = $request->file('cover_image');
-                // توليد اسم فريد بالكامل للملف مع الامتداد الأصلي
-                $fileName = uniqid() . '-' . time() . '.' . $image->getClientOriginalExtension();
-                $fullPath = 'covers/' . $fileName;
-
-                // استخدام دالة الرفع المباشر للمحتوى لتفادي مشاكل الـ Temp Paths في سيرفر Render
-                Storage::disk('s3')->put($fullPath, file_get_contents($image->getRealPath()));
+                $path = $request->file('cover_image')->store('covers', 's3');
                 
-                // حفظ الرابط النهائي المباشر في قاعدة البيانات
-                $validated['cover_image'] = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $fullPath;
+                $validated['cover_image'] = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $path;
             } catch (\Exception $e) {
                 \Log::error('Supabase Store Cover Error: ' . $e->getMessage());
                 return redirect()->back()->withErrors(['cover_image' => 'فشل الرفع السحابي: ' . $e->getMessage()]);
@@ -76,18 +68,14 @@ class ProjectController extends Controller
 
         $project = Project::create($validated);
 
-        // 🚀 الرفع الآمن لصور المعرض 🚀
         if ($request->hasFile('gallery_images')) {
             foreach ($request->file('gallery_images') as $image) {
                 try {
-                    $galleryFileName = uniqid() . '-' . time() . '.' . $image->getClientOriginalExtension();
-                    $galleryFullPath = 'gallery/' . $galleryFileName;
-
-                    Storage::disk('s3')->put($galleryFullPath, file_get_contents($image->getRealPath()));
+                    $galleryPath = $image->store('gallery', 's3');
 
                     ProjectImage::create([
                         'project_id' => $project->id,
-                        'image_path' => rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $galleryFullPath,
+                        'image_path' => rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/' . $galleryPath,
                     ]);
                 } catch (\Exception $e) {
                     \Log::error('Supabase Store Gallery Error: ' . $e->getMessage());
@@ -145,7 +133,6 @@ class ProjectController extends Controller
 
         if ($request->hasFile('cover_image')) {
             try {
-                // حذف الصورة القديمة من السحاب السري لتوفير المساحة المتاحة
                 if ($project->cover_image) {
                     $prefixPath = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/';
                     $oldPath = str_replace($prefixPath, '', $project->cover_image);
@@ -189,13 +176,11 @@ class ProjectController extends Controller
         $prefixPath = rtrim($supabaseUrl, '/') . '/storage/v1/object/public/' . $bucketName . '/';
 
         try {
-            // حذف الغلاف السحابي
             if ($project->cover_image) {
                 $coverPath = str_replace($prefixPath, '', $project->cover_image);
                 Storage::disk('s3')->delete($coverPath);
             }
 
-            // حذف صور المعرض السحابية
             foreach ($project->images as $image) {
                 if ($image->image_path) {
                     $galleryPath = str_replace($prefixPath, '', $image->image_path);

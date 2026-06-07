@@ -6,24 +6,31 @@ import * as LucideIcons from 'lucide-react';
 import SectionHeading from '@/Components/UI/SectionHeading';
 import { useTrans } from '@/Hooks/useTrans';
 
-// المعيار العالمي للـ Easing الفاخر للموقع العام
+// المعيار العالمي للـ Easing للرأس فقط (الكروت أصبحت تعتمد على الفيزياء)
 const premiumEase = [0.16, 1, 0.3, 1];
 
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
-        transition: { staggerChildren: 0.08 }
+        // 🌊 التعديل الأول: توسيع الفجوة الزمنية من 0.08 إلى 0.15 لعمل تأثير "الموجة" بوضوح
+        transition: { staggerChildren: 0.15 } 
     }
 };
 
 const cardVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.98 },
+    hidden: { opacity: 0, y: 40, scale: 0.95 },
     visible: { 
         opacity: 1, 
         y: 0,
         scale: 1,
-        transition: { duration: 0.8, ease: premiumEase }
+        // 🧲 التعديل الثاني: استبدال التوقيت الخطي بـ "فيزياء الزنبرك" لظهور طبيعي جداً
+        transition: { 
+            type: "spring", 
+            stiffness: 80, 
+            damping: 15, 
+            mass: 1 
+        }
     }
 };
 
@@ -56,7 +63,7 @@ export default function Services({ services = [], isHome = false }) {
                     />
                 </motion.div>
 
-                {/* Balanced Architectural Services Grid */}
+                {/* Fluid Architectural Services Grid */}
                 <motion.div 
                     variants={containerVariants}
                     initial="hidden"
@@ -78,18 +85,23 @@ export default function Services({ services = [], isHome = false }) {
                                 >
                                     <motion.div 
                                         variants={cardVariants}
-                                        whileHover={{ y: -8 }}
-                                        className="bg-white h-full p-7 md:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-charcoal/[0.05] transition-all duration-500 flex flex-col relative overflow-hidden"
+                                        // ⚡ التعديل الثالث: حركة Hover بفيزياء زنبركية مشدودة جداً لاستجابة فورية
+                                        whileHover={{ 
+                                            y: -8,
+                                            transition: { type: "spring", stiffness: 400, damping: 25 }
+                                        }}
+                                        // 🛠️ الحل الجذري: إزالة transition-all التي تقتل Framer Motion، واستبدالها بـ transition-colors transition-shadow لحماية الظلال والألوان فقط وتقليل المدة لـ 300
+                                        className="bg-white h-full p-7 md:p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-2xl hover:shadow-charcoal/[0.05] transition-colors transition-shadow duration-300 flex flex-col relative overflow-hidden"
                                     >
                                         {/* الخط العلوي الذهبي */}
-                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rtl:origin-right" />
+                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-gold to-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out origin-left rtl:origin-right" />
 
-                                        {/* البادج الهندسي للأيقونة: مقاس متوازن 14x14 */}
-                                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 mb-6 text-charcoal group-hover:bg-gold group-hover:text-white group-hover:border-gold group-hover:shadow-lg group-hover:shadow-gold/30 transition-all duration-500 transform group-hover:-translate-y-1.5">
+                                        {/* البادج الهندسي للأيقونة: تم تسريع استجابته لـ 300ms ليكون Snappy */}
+                                        <div className="w-14 h-14 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 mb-6 text-charcoal group-hover:bg-gold group-hover:text-white group-hover:border-gold group-hover:shadow-lg group-hover:shadow-gold/30 transition-all duration-300 ease-out transform group-hover:-translate-y-1.5">
                                             {renderIcon(service.icon)}
                                         </div>
                                         
-                                        {/* عنوان الخدمة: حجم احترافي وأنيق */}
+                                        {/* عنوان الخدمة */}
                                         <h3 className="text-lg font-extrabold text-charcoal-dark uppercase tracking-wide mb-3 group-hover:text-gold transition-colors duration-300">
                                             {service.title}
                                         </h3>
@@ -104,12 +116,12 @@ export default function Services({ services = [], isHome = false }) {
                                             <span>{__('services.explore')}</span>
                                             <ArrowUpRight 
                                                 size={16} 
-                                                className="stroke-[2.5] transform group-hover:translate-x-1 group-hover:-translate-y-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1 transition-transform duration-300" 
+                                                className="stroke-[2.5] transform group-hover:translate-x-1 group-hover:-translate-y-1 rtl:-scale-x-100 rtl:group-hover:-translate-x-1 transition-transform duration-300 ease-out" 
                                             />
                                         </div>
 
                                         {/* لمحة توهج خلفية */}
-                                        <div className="absolute -bottom-10 -right-10 w-28 h-28 bg-gold/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none rtl:-left-10 rtl:-right-auto" />
+                                        <div className="absolute -bottom-10 -right-10 w-28 h-28 bg-gold/5 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rtl:-left-10 rtl:-right-auto" />
                                     </motion.div>
                                 </Link>
                             );

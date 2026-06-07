@@ -29,33 +29,19 @@ export default function Portfolio({ projects = [], categories = [], isHome = fal
                 />
 
                 {/* Minimalist & Premium Category Filter Tabs */}
-                <div className="flex flex-wrap items-center justify-center gap-2 mt-12 border-b border-gray-100 pb-3 max-w-2xl mx-auto">
-                    <button
-                        onClick={() => setActiveCategory(null)}
-                        className={`relative px-4 py-2 text-xs font-bold tracking-wider uppercase transition-colors duration-300 focus:outline-none ${
-                            activeCategory === null ? 'text-gold' : 'text-gray-400 hover:text-charcoal'
-                        }`}
+                <div className="relative w-full max-w-3xl mx-auto mt-12 mb-8">
+                    <div 
+                        className="flex flex-nowrap md:flex-wrap items-center justify-start md:justify-center gap-2 md:gap-4 pb-3 overflow-x-auto border-b border-gray-100 px-4 md:px-0 scroll-smooth [&::-webkit-scrollbar]:hidden"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     >
-                        <span className="relative z-10">{__('portfolio.filters.all')}</span>
-                        {activeCategory === null && (
-                            <motion.span 
-                                layoutId="activeTabLine" 
-                                className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-gold rounded-full"
-                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                            />
-                        )}
-                    </button>
-
-                    {categories.map((category) => (
                         <button
-                            key={category.id}
-                            onClick={() => setActiveCategory(category.id)}
-                            className={`relative px-4 py-2 text-xs font-bold tracking-wider uppercase transition-colors duration-300 focus:outline-none ${
-                                activeCategory === category.id ? 'text-gold' : 'text-gray-400 hover:text-charcoal'
+                            onClick={() => setActiveCategory(null)}
+                            className={`shrink-0 relative px-4 py-2 text-xs font-bold tracking-wider uppercase transition-colors duration-300 focus:outline-none ${
+                                activeCategory === null ? 'text-gold' : 'text-gray-400 hover:text-charcoal'
                             }`}
                         >
-                            <span className="relative z-10">{category.name}</span>
-                            {activeCategory === category.id && (
+                            <span className="relative z-10">{__('portfolio.filters.all')}</span>
+                            {activeCategory === null && (
                                 <motion.span 
                                     layoutId="activeTabLine" 
                                     className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-gold rounded-full"
@@ -63,7 +49,26 @@ export default function Portfolio({ projects = [], categories = [], isHome = fal
                                 />
                             )}
                         </button>
-                    ))}
+
+                        {categories.map((category) => (
+                            <button
+                                key={category.id}
+                                onClick={() => setActiveCategory(category.id)}
+                                className={`shrink-0 relative px-4 py-2 text-xs font-bold tracking-wider uppercase transition-colors duration-300 focus:outline-none ${
+                                    activeCategory === category.id ? 'text-gold' : 'text-gray-400 hover:text-charcoal'
+                                }`}
+                            >
+                                <span className="relative z-10">{category.name}</span>
+                                {activeCategory === category.id && (
+                                    <motion.span 
+                                        layoutId="activeTabLine" 
+                                        className="absolute bottom-[-13px] left-0 right-0 h-[2px] bg-gold rounded-full"
+                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                )}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Grid Workspace with popLayout transition animation */}

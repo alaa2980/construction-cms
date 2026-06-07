@@ -18,6 +18,14 @@ RUN apk add --no-cache \
     oniguruma-dev \
     && docker-php-ext-install pdo pdo_mysql pdo_pgsql pgsql mbstring exif pcntl bcmath
 
+# 1. تعديل إعدادات PHP لرفع حجم الملفات المسموح بها
+RUN echo "upload_max_filesize = 25M" >> /usr/local/etc/php/conf.d/docker-php-upload.ini \
+    && echo "post_max_size = 30M" >> /usr/local/etc/php/conf.d/docker-php-upload.ini \
+    && echo "memory_limit = 256M" >> /usr/local/etc/php/conf.d/docker-php-upload.ini
+
+# 2. تعديل إعدادات خادم Nginx (لمنع خطأ 413 الشهير)
+RUN sed -i 's/client_max_body_size.*/client_max_body_size 30M;/' /etc/nginx/nginx.conf || true
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

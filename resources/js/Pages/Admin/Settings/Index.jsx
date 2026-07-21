@@ -4,8 +4,7 @@ import { motion } from 'framer-motion';
 import AdminLayout from '@/Layouts/AdminLayout';
 import { Save, Phone, Mail, MapPin, Share2, CheckCircle2, Sliders } from 'lucide-react';
 
-export default function Index({ settings }) {
-    // Initializing state with explicit server-side values mapped to database fields
+export default function Index({ settings = {} }) {
     const { data, setData, post, processing, wasSuccessful } = useForm({
         company_phone: settings.company_phone || '',
         company_email: settings.company_email || '',
@@ -23,142 +22,148 @@ export default function Index({ settings }) {
 
     return (
         <>
-            <Head title="Global System Settings" />
+            <Head title="Settings | Admin Workspace" />
 
-            {/* Premium Synchronized Action Sub-Header */}
-            <div className="mb-10 select-none">
-                <h2 className="text-sm font-black text-charcoal-dark uppercase tracking-wider flex items-center gap-2">
-                    <Sliders size={16} className="text-gold" />
-                    Global System Configuration
-                </h2>
-                <p className="text-xs text-gray-400 mt-1 font-normal">Calibrate your core website properties, dynamic identity metadata, and social integration configurations.</p>
+            {/* ترويسة الصفحة */}
+            <div className="mb-8">
+                <div className="flex items-center gap-2.5 mb-1">
+                    <div className="p-1.5 bg-gold/10 rounded-lg">
+                        <Sliders size={18} className="text-gold" strokeWidth={2.5} />
+                    </div>
+                    <h2 className="text-xl font-bold text-charcoal-dark tracking-tight">
+                        System Settings
+                    </h2>
+                </div>
+                <p className="text-sm text-gray-500 font-medium">
+                    Configure your core website properties, contact details, and social media links.
+                </p>
             </div>
 
-            {/* Clean Enterprise Success Alert Status Card */}
+            {/* تنبيه النجاح */}
             {wasSuccessful && (
                 <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="mb-6 p-4 bg-emerald-500/[0.06] border border-emerald-500/10 text-emerald-600 rounded-xl flex items-center gap-3 text-xs font-bold uppercase tracking-wide max-w-3xl"
+                    className="mb-6 p-4 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-2xl flex items-center gap-3 text-sm font-medium max-w-3xl shadow-sm"
                 >
-                    <CheckCircle2 className="w-4 h-4 stroke-[2.5] flex-shrink-0" />
-                    <span>Configuration updated successfully. Adjustments are now deployed and live globally.</span>
+                    <CheckCircle2 size={18} className="text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
+                    <span>Settings updated successfully. Changes are now live globally.</span>
                 </motion.div>
             )}
 
-            {/* Master Settings Workspace Grid Panel */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm max-w-3xl overflow-hidden backdrop-blur-sm">
-                <form onSubmit={handleSubmit} className="divide-y divide-gray-50">
+            {/* لوحة النموذج الرئيسية */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm max-w-3xl overflow-hidden">
+                <form onSubmit={handleSubmit} className="divide-y divide-gray-100">
                     
-                    {/* SECTION 1: CORPORATE CHANNELS IDENTITY */}
+                    {/* القسم الأول: معلومات التواصل */}
                     <div className="p-8 space-y-6">
-                        <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-2">
-                            <Phone size={14} className="text-gold" />
-                            <h3 className="text-xs font-black text-charcoal-dark uppercase tracking-wider">
-                                Corporate Contact Directories
+                        <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-2">
+                            <Phone size={16} className="text-gold" />
+                            <h3 className="text-sm font-bold text-charcoal-dark">
+                                Contact Information
                             </h3>
                         </div>
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Public Hot-Line Phone</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">Phone Number</label>
                                 <input 
                                     type="text" 
                                     value={data.company_phone} 
                                     onChange={(e) => setData('company_phone', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
                                     placeholder="+966 50 000 0000"
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Public Gateway Email Address</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">Email Address</label>
                                 <input 
                                     type="email" 
                                     value={data.company_email} 
                                     onChange={(e) => setData('company_email', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
                                     placeholder="info@enterprise.com"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Headquarters Blueprint Address</label>
+                            <label className="block text-sm font-medium text-charcoal-dark mb-2">Headquarters Address</label>
                             <div className="relative">
                                 <input 
                                     type="text" 
                                     value={data.company_address} 
                                     onChange={(e) => setData('company_address', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 pl-10 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
+                                    className="w-full bg-white border border-gray-200 pl-10 pr-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
                                     placeholder="Riyadh, Saudi Arabia"
                                 />
-                                <MapPin className="w-3.5 h-3.5 text-gray-400 absolute left-3.5 top-3.5 stroke-[2]" />
+                                <MapPin size={16} className="text-gray-400 absolute left-3.5 top-3.5" />
                             </div>
                         </div>
                     </div>
 
-                    {/* SECTION 2: DIGITAL CHANNELS SYNDICATION */}
+                    {/* القسم الثاني: وسائل التواصل الاجتماعي */}
                     <div className="p-8 space-y-6">
-                        <div className="flex items-center gap-2 border-b border-gray-50 pb-3 mb-2">
-                            <Share2 size={14} className="text-gold" />
-                            <h3 className="text-xs font-black text-charcoal-dark uppercase tracking-wider">
-                                Digital Channels Syndication
+                        <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-2">
+                            <Share2 size={16} className="text-gold" />
+                            <h3 className="text-sm font-bold text-charcoal-dark">
+                                Social Media Profiles
                             </h3>
                         </div>
 
-                        <div className="space-y-5">
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Facebook Portal Directory</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">Facebook URL</label>
                                 <input 
                                     type="url" 
                                     value={data.facebook_url} 
                                     onChange={(e) => setData('facebook_url', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
-                                    placeholder="https://facebook.com/corporate-portal" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
+                                    placeholder="https://facebook.com/your-page" 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Twitter / X Channel Anchor</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">Twitter / X URL</label>
                                 <input 
                                     type="url" 
                                     value={data.twitter_url} 
                                     onChange={(e) => setData('twitter_url', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
-                                    placeholder="https://x.com/corporate-channel" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
+                                    placeholder="https://x.com/your-handle" 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">LinkedIn Enterprise Profile</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">LinkedIn URL</label>
                                 <input 
                                     type="url" 
                                     value={data.linkedin_url} 
                                     onChange={(e) => setData('linkedin_url', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
-                                    placeholder="https://linkedin.com/company/enterprise-profile" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
+                                    placeholder="https://linkedin.com/company/your-company" 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[11px] font-black text-gray-400 uppercase tracking-wider mb-2">Instagram Enterprise Profile</label>
+                                <label className="block text-sm font-medium text-charcoal-dark mb-2">Instagram URL</label>
                                 <input 
                                     type="url" 
                                     value={data.instagram_url} 
                                     onChange={(e) => setData('instagram_url', e.target.value)} 
-                                    className="w-full bg-gray-50/40 border border-gray-100 p-3 text-xs font-bold tracking-wide rounded-lg text-charcoal-dark placeholder-gray-400 focus:bg-white focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-200 outline-none" 
-                                    placeholder="https://instagram.com/company/enterprise-profile" 
+                                    className="w-full bg-white border border-gray-200 px-4 py-3 text-sm text-charcoal-dark rounded-xl focus:border-gold focus:ring-4 focus:ring-gold/20 outline-none transition-all" 
+                                    placeholder="https://instagram.com/your-profile" 
                                 />
                             </div>
                         </div>
                     </div>
 
-                    {/* GLOBAL MASTER DEPLOYMENT EXECUTION CONTROL */}
-                    <div className="p-8 bg-gray-50/70 flex justify-end select-none">
+                    {/* زر الحفظ */}
+                    <div className="p-6 bg-gray-50/50 flex justify-end">
                         <button
                             type="submit"
                             disabled={processing}
-                            className="inline-flex items-center gap-2 bg-charcoal text-white text-xs font-black uppercase tracking-wider px-8 py-4 rounded-xl hover:bg-charcoal-dark disabled:opacity-50 shadow-md shadow-charcoal/10 hover:shadow-lg hover:shadow-charcoal/20 transform hover:-translate-y-0.5 disabled:transform-none transition-all duration-300 focus:outline-none"
+                            className="inline-flex items-center gap-2 bg-charcoal-dark text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-charcoal disabled:opacity-50 shadow-sm transition-all duration-300 focus:outline-none active:scale-[0.98]"
                         >
-                            <Save className="w-3.5 h-3.5 stroke-[2.5]" />
-                            <span>{processing ? 'Deploying Adjustments...' : 'Save All Settings'}</span>
+                            <Save size={16} strokeWidth={2.5} className="text-gold" />
+                            <span>{processing ? 'Saving Changes...' : 'Save Settings'}</span>
                         </button>
                     </div>
 

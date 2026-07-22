@@ -43,7 +43,7 @@ To run this project locally, ensure you have Docker installed.
 
 ```bash
 # 1. Clone the repository
-git clone [https://github.com/your-username/construction-cms.git](https://github.com/your-username/construction-cms.git)
+git clone [https://github.com/alaa2980/construction-cms.git](https://github.com/alaa2980/construction-cms.git)
 
 # 2. Navigate to the directory
 cd construction-cms

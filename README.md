@@ -8,6 +8,14 @@
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 
+> **⚠️ Commercial Enterprise Product & Proof of Work**
+> 
+> Please note that this repository contains the core architecture of a **proprietary, enterprise-grade platform available for B2B purchase, licensing, and white-label customization**. 
+> 
+> The source code is made public here exclusively as a **Proof of Work** to showcase the system's structural integrity, clean code principles, and advanced architectural design to prospective clients, technical recruiters, and enterprise partners. This is a commercial product and is not authorized for free commercial replication. For business inquiries, purchase, or custom deployments, please contact the developer directly.
+
+---
+
 A scalable, full-stack Content Management System (CMS) and interactive client portal engineered specifically for the construction, engineering, and contracting sectors. This system acts as a digital bridge, providing a highly responsive public interface for clients alongside a secure, centralized administrative workspace for business operations.
 
 ---
@@ -72,7 +80,7 @@ The system is fully containerized for a seamless, consistent local development e
 
 **1. Clone the repository:**
 ```bash
-git clone https://github.com/alaa2980/construction-cms.git
+git clone [https://github.com/alaa2980/construction-cms.git](https://github.com/alaa2980/construction-cms.git)
 cd construction-cms
 ```
 
